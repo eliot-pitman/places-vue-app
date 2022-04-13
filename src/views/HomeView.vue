@@ -3,7 +3,7 @@ import axios from "axios";
 
 export default {
   data: function () {
-    return { places: {}, post: {}, currentPlace: {}, newPlacesParams: {}, successMessage: "" };
+    return { places: {}, post: {}, currentPlace: {}, newPlacesParams: {}, errors: [] };
   },
   created: function () {
     axios.get("/places").then((response) => {
@@ -19,19 +19,34 @@ export default {
     },
     placesUpdate: function (place) {
       var placeParams = place;
-      axios.patch("/places/" + place.id, placeParams).then((response) => {
-        console.log("success", (this.successMessage = "successfully updated"), response.data);
-      });
+      axios
+        .patch("/places/" + place.id, placeParams)
+        .then((response) => {
+          console.log("success", response.data);
+        })
+        .catch((error) => {
+          this.errors = error.response.data.errors;
+        });
     },
     placesDestroy: function (place) {
-      axios.delete("/places/" + place.id).then((response) => {
-        console.log("successfully deleted", (this.successMessage = "successfully destroyed"), response.data);
-      });
+      axios
+        .delete("/places/" + place.id)
+        .then((response) => {
+          console.log("successfully deleted", response.data);
+        })
+        .catch((error) => {
+          this.errors = error.response.data.errors;
+        });
     },
     placesCreate: function () {
-      axios.post("/places", this.newPlacesParams).then((response) => {
-        console.log("success", (this.successMessage = "successfully created"), response.data);
-      });
+      axios
+        .post("/places", this.newPlacesParams)
+        .then((response) => {
+          console.log("success", response.data);
+        })
+        .catch((error) => {
+          this.errors = error.response.data.errors;
+        });
     },
   },
 };
@@ -48,12 +63,17 @@ export default {
       <input type="text" v-model="newPlacesParams.address" />
       <br />
       <button @click="placesCreate">create</button>
-      <p>{{ successMessage }}</p>
+      <ul>
+        <li v-for="error in errors" :key="error.id">{{ error }}</li>
+      </ul>
     </div>
     <div v-for="place in places" :key="place.id">
       <h1>{{ place.name }}</h1>
       <h2>{{ place.address }}</h2>
       <button id="info-button" @click="placesShow(place)">click for more info</button>
+      <ul>
+        <li v-for="error in errors" :key="error.id">{{ error }}</li>
+      </ul>
     </div>
     <dialog id="Place-details">
       <form method="dialog">
@@ -66,7 +86,6 @@ export default {
         <button @click="placesUpdate(currentPlace)">Update</button>
         <button @click="placesDestroy(currentPlace)">Delete</button>
         <button>Close</button>
-        <p>{{ successMessage }}</p>
       </form>
     </dialog>
   </div>
