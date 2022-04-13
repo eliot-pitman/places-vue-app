@@ -3,7 +3,7 @@ import axios from "axios";
 
 export default {
   data: function () {
-    return { places: {}, post: {} };
+    return { places: {}, post: {}, currentPlace: {}, newPlacesParams: {}, successMessage: "" };
   },
   created: function () {
     axios.get("/places").then((response) => {
@@ -12,10 +12,25 @@ export default {
     });
   },
   methods: {
-    placesShow: function () {
-      axios.get("/places/" + this.$route.params.id).then((response) => {
-        console.log(response.data);
-        this.post = response.data;
+    placesShow: function (place) {
+      console.log(place);
+      this.currentPlace = place;
+      document.querySelector("#Place-details").showModal();
+    },
+    placesUpdate: function (place) {
+      var placeParams = place;
+      axios.patch("/places/" + place.id, placeParams).then((response) => {
+        console.log("success", (this.successMessage = "successfully updated"), response.data);
+      });
+    },
+    placesDestroy: function (place) {
+      axios.delete("/places/" + place.id).then((response) => {
+        console.log("successfully deleted", (this.successMessage = "successfully destroyed"), response.data);
+      });
+    },
+    placesCreate: function () {
+      axios.post("/places", this.newPlacesParams).then((response) => {
+        console.log("success", (this.successMessage = "successfully created"), response.data);
       });
     },
   },
@@ -24,9 +39,35 @@ export default {
 
 <template>
   <div class="home">
+    <h1>create a new contact</h1>
+    <div id="places-new">
+      <h2>name:</h2>
+      <input type="text" v-model="newPlacesParams.name" />
+      <br />
+      <h2>address:</h2>
+      <input type="text" v-model="newPlacesParams.address" />
+      <br />
+      <button @click="placesCreate">create</button>
+      <p>{{ successMessage }}</p>
+    </div>
     <div v-for="place in places" :key="place.id">
       <h1>{{ place.name }}</h1>
       <h2>{{ place.address }}</h2>
+      <button id="info-button" @click="placesShow(place)">click for more info</button>
     </div>
+    <dialog id="Place-details">
+      <form method="dialog">
+        <h1>Name</h1>
+        <p id="Place-id">name:</p>
+        <input type="text" v-model="currentPlace.name" />
+        <h1>Address</h1>
+        <p id="Place-id">address:</p>
+        <input type="text" v-model="currentPlace.address" />
+        <button @click="placesUpdate(currentPlace)">Update</button>
+        <button @click="placesDestroy(currentPlace)">Delete</button>
+        <button>Close</button>
+        <p>{{ successMessage }}</p>
+      </form>
+    </dialog>
   </div>
 </template>
